@@ -1,0 +1,35 @@
+---
+- hosts: webservers
+  remote_user: ec2-user
+  sudo: true
+
+  vars:
+    packages: ["git"]
+    app_name: Broker
+    repo_url:  https://github.com/alexrochas/fake-service.git
+    repo_remote: origin
+    repo_version: master
+    app_dir: /fake-service
+
+  tasks:
+    - name: Installing Java
+      yum:
+        name: ["java-1.8.0-openjdk.x86_64", "java-1.8.0-openjdk-devel.x86_64"]
+        update_cache: yes
+
+    - name: Update repositories cache and install "git" package
+      yum:
+        name: git-all
+        update_cache: yes
+
+    - name: git pull project
+      git: repo={{repo_url}} dest={{app_dir}} version=master
+
+    - name: ls
+      shell: ls /broker
+
+    - name: build jar
+      shell: /broker/gradlew -p /broker fatJar
+      environment:
+              JAVA_HOME: /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.181-3.b13.amzn2.x86_64/jre
+
