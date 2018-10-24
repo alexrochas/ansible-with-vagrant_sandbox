@@ -1,35 +1,54 @@
 ---
 - hosts: webservers
-  remote_user: ec2-user
-  sudo: true
+  remote_user: vagrant
+  roles:
+    - { role: rvm.ruby,
+        tags: ruby,
+        rvm1_rubies: ['ruby-2.3.1'],
+        rvm1_bundler_install: True,
+        rvm1_user: vagrant
+      }
+  environment:
+    PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin:\
+           {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global/bin:\
+           {{ ansible_env.HOME }}/.rvm/rubies/ruby-{{ ruby_version }}/bin:\
+           {{ ansible_env.HOME }}/.rvm/bin:\
+           {{ lookup('env', 'PATH') }}"
+    GEM_PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}:\
+                     {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global"
 
   vars:
     packages: ["git"]
-    app_name: Broker
     repo_url:  https://github.com/alexrochas/fake-service.git
     repo_remote: origin
+    ruby_version: 2.3.1
     repo_version: master
-    app_dir: /fake-service
+    app_dir: "{{ ansible_env.HOME }}/fake-service"
 
   tasks:
-    - name: Installing Java
-      yum:
-        name: ["java-1.8.0-openjdk.x86_64", "java-1.8.0-openjdk-devel.x86_64"]
-        update_cache: yes
-
     - name: Update repositories cache and install "git" package
       yum:
         name: git-all
         update_cache: yes
+      become: yes
+      become_user: root
 
     - name: git pull project
       git: repo={{repo_url}} dest={{app_dir}} version=master
 
-    - name: ls
-      shell: ls /broker
+    - gem:
+        name: bundler
 
-    - name: build jar
-      shell: /broker/gradlew -p /broker fatJar
-      environment:
-              JAVA_HOME: /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.181-3.b13.amzn2.x86_64/jre
+    - bundler:
+        gemfile: "{{app_dir}}/Gemfile"
+        state: present
+        executable: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin/bundler"
+        gem_path: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}"
+
+    - name: Start sinatra
+      command: "bundle exec ruby fake-service.rb"
+      args:
+        chdir: "{{app_dir}}/"
+
+
 
