@@ -1,5 +1,8 @@
 # Ansible with Vagrant
 
+Sandbox example to develop ansible scripts in a secure environment.
+Start vagrant with `vagrant up` and run your ansible against it.
+
 ## Vagrant ssh info
 
 Fetch info:
@@ -19,6 +22,16 @@ Have [ansible](https://docs.ansible.com/ansible/2.4/intro_installation.html#late
 Run!
 ```bash
 ~/path/to/project$ ansible-playbook -v ansible-playbook.yml -i hosts
+```
+
+run a minor test on the running fake api
+```bash
+~/$ curl 192.168.33.11:4567
+```
+
+the result should be
+```json
+{"resultado":"00","dataHora":"0802221226"}
 ```
 
 ## Meta
