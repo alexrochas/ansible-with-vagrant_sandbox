@@ -46,7 +46,7 @@
         gem_path: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}"
 
     - name: Start sinatra
-      command: "bundle exec ruby fake-service.rb"
+      shell: bundle exec ruby fake-service.rb  </dev/null >/dev/null 2>&1 &
       args:
         chdir: "{{app_dir}}/"
 
